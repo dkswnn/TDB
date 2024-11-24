@@ -7,6 +7,12 @@ import {
 import { Layout, Menu } from "antd";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton,
+} from "@clerk/clerk-react";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -48,7 +54,12 @@ const PageLayout = ({ children }) => {
         className="bg-gray-800"
       >
         <div className="h-16 bg-gray-900 flex items-center justify-center text-white">
-          Logo
+          <SignedOut>
+            <SignInButton className="border-[1px] border-slate-200 rounded-full p-2" />
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
         </div>
         <Menu
           theme="dark"
