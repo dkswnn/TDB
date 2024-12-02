@@ -32,11 +32,9 @@ const items = [
     "/messenger",
     <MessageFilled />
   ),
-  getItem(
-    <Link to="/notification">Notifications</Link>,
-    "/notification",
-    <BellFilled />
-  ),
+  getItem("Assignment ", "sub1", null, [
+    getItem(<Link to="/assignment">Assignment </Link>, "/assignment"),
+  ]),
   getItem(<Link to="/settings">Settings</Link>, "/settings", <SettingFilled />),
 ];
 
