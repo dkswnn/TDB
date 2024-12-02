@@ -1,17 +1,17 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Home from "./pages/home/Home";
 import Messenger from "./pages/messenger/Messenger";
-import Notification from "./pages/notification/Notification";
 import Settings from "./pages/settings/Settings";
+import Assignment from "./pages/assignment/Assignment";
 
 const App = () => {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/Messenger" element={<Messenger />} />
-        <Route path="/Notification" element={<Notification />} />
-        <Route path="/Settings" element={<Settings />} />
+        <Route path="/messenger" element={<Messenger />} />
+        <Route path="/assignment" element={<Assignment />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </Router>
   );
