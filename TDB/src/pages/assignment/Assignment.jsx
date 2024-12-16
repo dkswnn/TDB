@@ -1,11 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import PageLayout from "../../layouts/PageLayout";
-import { Button, Checkbox, DatePicker } from "antd";
+import { Button, message } from "antd";
+import { SignInButton, useUser } from "@clerk/clerk-react";
+import TaskCard from "./TaskCard";
+import AddTaskModal from "./AddTaskModal";
+import { DragDropContext, Droppable } from "react-beautiful-dnd";
 
 const Assignment = () => {
   const [showAddTask, setShowAddTask] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Initialize tasks state
   const [tasks, setTasks] = useState([]);
 
   const [newTask, setNewTask] = useState({
@@ -13,178 +17,292 @@ const Assignment = () => {
     priority: "",
     partners: "",
     date: "",
+    status: "todo",
   });
 
-  const handleAddTask = () => {
-    if (newTask.name && newTask.priority && newTask.partners && newTask.date) {
-      setTasks([...tasks, newTask]); // Add new task to tasks list
-      setNewTask({ name: "", priority: "", partners: "", date: "" }); // Reset newTask fields
-      setShowAddTask(false); // Close modal
+  const { user, signInAttempt } = useUser();
+
+  useEffect(() => {
+    if (!user) {
+      console.log("Please sign in to access this page.");
     } else {
-      alert("Please fill in all fields"); // Validation alert
+      setTasks(user.unsafeMetadata.todos || []);
     }
+  }, [user]);
+
+  const handleAddTask = useCallback(() => {
+    if (newTask.name && newTask.priority && newTask.partners && newTask.date) {
+      const updatedTasks = [...task, newTask];
+      setTasks(updatedTasks);
+      setNewTask({
+        name: "",
+        priority: "",
+        partners: "",
+        date: "",
+        status: "todo",
+      });
+      setShowAddTask(false);
+      user.update({
+        unsafeMetadata: { ...user.unsafeMetadata, todos: updatedTasks },
+      });
+    } else {
+      message.error("Please fill in all fields");
+    }
+  }, [newTask, tasks, user]);
+
+  const moveTaskToSection = useCallback(
+    (taskIndex, newStatus) => {
+      const updatedTasks = tasks.map((task, index) => {
+        if (index === taskIndex) {
+          return { ...task, status: newStatus };
+        }
+        return task;
+      });
+      setTasks(updatedTasks);
+      user.update({
+        unsafeMetadata: { ...user.unsafeMetadata, todos: updatedTasks },
+      });
+    },
+    [tasks, user]
+  );
+
+  const removeTask = useCallback(
+    (taskIndex) => {
+      const updatedTasks = tasks.filter((task, index) => index !== taskIndex);
+      setTasks(updatedTasks);
+      user.update({
+        unsafeMetadata: { ...user.unsafeMetadata, todos: updatedTasks },
+      });
+    },
+    [tasks, user]
+  );
+
+  const onDragEnd = (result) => {
+    if (!result.destination) return; // If dropped outside a droppable area
+    const { source, destination } = result;
+    const updatedTasks = Array.from(tasks);
+    const [movedTask] = updatedTasks.splice(source.index, 1); // Remove the task from the source index
+    movedTask.status = destination.droppableId; // Update the status based on the droppableId
+    updatedTasks.splice(destination.index, 0, movedTask); // Insert the task at the destination index
+    setTasks(updatedTasks); // Update the tasks state
+    user.update({
+      unsafeMetadata: { ...user.unsafeMetadata, todos: updatedTasks },
+    });
   };
 
   return (
-    <PageLayout>
-      <div className="text-3xl font-medium mb-4">Project Name</div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Card 1 */}
-        <div className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm">
-          <div className="flex justify-between items-center mb-2">
-            <p className="font-semibold">Date Added:</p>
-            <p>{}</p>
-          </div>
-          <div className="flex justify-between items-center mb-2">
-            <p className="font-semibold">Deadline:</p>
-            <p>2025/01/15</p>
-          </div>
-          <div className="flex justify-between items-center mb-2">
-            <p className="font-semibold">Partners:</p>
-            <p>Duku,Suuri,Tamira</p>
-          </div>
-        </div>
+    <DragDropContext onDragEnd={onDragEnd}>
+      {user ? (
+        <PageLayout>
+          <div className="text-3xl font-medium mb-4">Project Name</div>
+          {/* <ListTasks tasks={tasks} setTasks={setTasks} /> */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Card 1 */}
+            <div className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm">
+              <div className="flex justify-between items-center mb-2">
+                <p className="font-semibold">Date Added:</p>
+                <p></p>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <p className="font-semibold">Deadline:</p>
+                <p>2025/01/15</p>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <p className="font-semibold">Partners:</p>
+                <p>Duku,Suuri,Tamira</p>
+              </div>
+            </div>
 
-        {/* Card 2 */}
-        <div className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm">
-          <p className="text-lg font-semibold text-[#333333]">Goal:</p>
-          <div className="flex justify-between items-start mb-4">
-            <p className="text-sm text-[#666666] max-w-lg">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Quidem
-              qui enim eum facere nulla tempore, at natus sequi non,
-              perspiciatis adipisci obcaecati fugiat quod? Assumenda, incidunt
-              nobis! Amet, non quo.
-            </p>
-          </div>
-        </div>
+            {/* Card 2 */}
+            <div className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm">
+              <p className="text-lg font-semibold text-[#333333]">Goal:</p>
+              <div className="flex justify-between items-start mb-4">
+                <p className="text-sm text-[#666666] max-w-lg">
+                  Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                  Quidem qui enim eum facere nulla tempore, at natus sequi non,
+                  perspiciatis adipisci obcaecati fugiat quod? Assumenda,
+                  incidunt nobis! Amet, non quo.
+                </p>
+              </div>
+            </div>
 
-        {/* Card 3 */}
-        <div className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm">
-          <div className="flex justify-between items-center mb-2">
-            <p className="font-semibold">All Tasks:</p>
-            <p>{tasks.length}</p>
+            {/* Card 3 */}
+            <div className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm">
+              <div className="flex justify-between items-center mb-2">
+                <p className="font-semibold">All Tasks:</p>
+                <p>{tasks.length}</p>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <p className="font-semibold">Done:</p>
+                <p>{tasks.filter((task) => task.status === "closed").length}</p>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <p className="font-semibold">Frozen:</p>
+                <p>{tasks.filter((task) => task.status === "frozen").length}</p>
+              </div>
+            </div>
           </div>
-          <div className="flex justify-between items-center mb-2">
-            <p className="font-semibold">Done:</p>
-            <p>0</p>
-          </div>
-          <div className="flex justify-between items-center mb-2">
-            <p className="font-semibold">Frozen:</p>
-            <p>1</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Todo section */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-5">
-        <div className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm">
-          <div className="flex justify-between items-center">
-            <p className="font-semibold text-xl">To Do</p>
-            <Button
-              type="primary"
-              shape="circle"
-              className="bg-green-500 text-white"
-              onClick={() => setShowAddTask(true)}
-            >
-              +
+          {/* Task sections */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-5">
+            {/* To Do section */}
+            <Droppable droppableId="todo">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm"
+                >
+                  <div className="flex justify-between items-center">
+                    <p className="font-semibold text-xl">To Do</p>
+                    <Button
+                      type="primary"
+                      shape="circle"
+                      className="bg-green-500 text-white"
+                      onClick={() => setShowAddTask(true)}
+                    >
+                      +
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 mt-5">
+                    {tasks
+                      .filter((task) => task.status === "todo")
+                      .map((task, index) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          index={index}
+                          draggableId={task.id} // Pass unique id
+                          removeTask={removeTask}
+                          moveTaskToSection={moveTaskToSection}
+                          loading={loading}
+                        />
+                      ))}
+                  </div>
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+
+            {/* In Progress section */}
+            <Droppable droppableId="in-progress">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm"
+                >
+                  <div className="flex justify-between items-center">
+                    <p className="font-semibold text-xl">In Progress </p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 mt-5">
+                    {tasks
+                      .filter((task) => task.status === "in-progress")
+                      .map((task, index) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          index={index}
+                          draggableId={task.id} // Pass unique id
+                          removeTask={removeTask}
+                          moveTaskToSection={moveTaskToSection}
+                          loading={loading}
+                        />
+                      ))}
+                  </div>
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+
+            {/* Closed section */}
+            <Droppable droppableId="closed">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm"
+                >
+                  <div className="flex justify-between items-center">
+                    <p className="font-semibold text-xl">Closed </p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 mt-5">
+                    {tasks
+                      .filter((task) => task.status === "closed")
+                      .map((task, index) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          index={index}
+                          draggableId={task.id} // Pass unique id
+                          removeTask={removeTask}
+                          moveTaskToSection={moveTaskToSection}
+                          loading={loading}
+                        />
+                      ))}
+                  </div>
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+
+            {/* Frozen section */}
+            <Droppable droppableId="frozen">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm"
+                >
+                  <div className="flex justify-between items-center">
+                    <p className="font-semibold text-xl">Frozen</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 mt-5">
+                    {tasks
+                      .filter((task) => task.status === "frozen")
+                      .map((task, index) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          index={index}
+                          draggableId={task.id} // Pass unique id
+                          removeTask={removeTask}
+                          moveTaskToSection={moveTaskToSection}
+                          loading={loading}
+                        />
+                      ))}
+                  </div>
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </div>
+
+          {/* Add Task Modal */}
+          <AddTaskModal
+            key={tasks.id}
+            showAddTask={showAddTask}
+            setShowAddTask={setShowAddTask}
+            handleAddTask={handleAddTask}
+            newTask={newTask}
+            setNewTask={setNewTask}
+            loading={loading}
+          />
+        </PageLayout>
+      ) : (
+        <PageLayout>
+          <div className="flex justify-center items-center h-screen">
+            <div className="text-3xl font-medium mb-4">
+              Please sign in to access this page.
+            </div>
+            <Button>
+              {" "}
+              <SignInButton />
             </Button>
           </div>
-          <div className="grid grid-cols-1 gap-4 mt-5">
-            {tasks.map((task, index) => (
-              <div
-                key={index}
-                className="bg-[#E0E4EA] rounded-md shadow-md p-4"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <p className="text-xs font-semibold">{task.name}</p>
-                  <p className="text-xs">{task.priority}</p>
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <p className="font-semibold text-xs">Partners:</p>
-                  <p className="text-xs">{task.partners}</p>
-                </div>
-                <div className="flex justify-between items-center">
-                  <p className="font-semibold text-xs">Date Added:</p>
-                  <p className="text-xs">{task.date}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm">
-          <div className="flex justify-between items-center">
-            <p className="font-semibold text-xl">Closed Task</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Add Task Modal */}
-      {showAddTask && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-md shadow-lg w-1/3">
-            <div className="font-semibold text-2xl text-center mb-4">
-              Add New Task
-            </div>
-            <div>
-              <div className="mb-4">
-                <p className="font-semibold">Task Name:</p>
-                <input
-                  type="text"
-                  value={newTask.name}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, name: e.target.value })
-                  }
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <div className="mb-4">
-                <p className="font-semibold">Type of Project:</p>
-                <div className="flex gap-4">
-                  {["High", "Medium", "Low"].map((level) => (
-                    <Checkbox
-                      key={level}
-                      checked={newTask.priority === level}
-                      onChange={() =>
-                        setNewTask({ ...newTask, priority: level })
-                      }
-                    >
-                      {level}
-                    </Checkbox>
-                  ))}
-                </div>
-              </div>
-              <div className="mb-4">
-                <p className="font-semibold">Partners:</p>
-                <input
-                  type="text"
-                  value={newTask.partners}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, partners: e.target.value })
-                  }
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <div className="mb-4">
-                <p className="font-semibold">Date Added:</p>
-                <DatePicker
-                  onChange={(date, dateString) =>
-                    setNewTask({ ...newTask, date: dateString })
-                  }
-                  className="w-full"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-4">
-              <Button onClick={() => setShowAddTask(false)}>Cancel</Button>
-              <Button type="primary" onClick={handleAddTask}>
-                Add Task
-              </Button>
-            </div>
-          </div>
-        </div>
+        </PageLayout>
       )}
-    </PageLayout>
+    </DragDropContext>
   );
 };
 
