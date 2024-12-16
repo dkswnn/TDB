@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PageLayout from "../../layouts/PageLayout";
 import { Modal, Button } from "antd";
 import { TreeSelect } from "antd";
+import { useUser } from "@clerk/clerk-react"; // Clerk hook for user info
 
 const Home = () => {
+  const { user } = useUser(); // Get current user from Clerk
   const days = ["Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан"];
   const times = [
     "8:00-9:30",
@@ -58,6 +60,70 @@ const Home = () => {
         },
       ],
     },
+    {
+      title: "Ч.Баттөгс",
+      value: "teacher5",
+      children: [
+        {
+          title: "Веб програмчлал",
+          value: "Веб програмчлал",
+        },
+        {
+          title: "Компьютерийн ухааны туршилт 3",
+          value: "Компьютерийн ухааны туршилт 3",
+        },
+      ],
+    },
+    {
+      title: "М.Оюунчимэг, Сакураи",
+      value: "teacher6",
+      children: [
+        {
+          title: "Япон хэл",
+          value: "Япон хэл",
+        },
+      ],
+    },
+    {
+      title: "Ц.Золбадрал",
+      value: "teacher7",
+      children: [
+        {
+          title: "Хэрэглээний физик 2",
+          value: "Хэрэглээний физик 2",
+        },
+      ],
+    },
+    {
+      title: "А.Даваа",
+      value: "teacher8",
+      children: [
+        {
+          title: "Техникийн англи хэл",
+          value: "Техникийн англи хэл",
+        },
+      ],
+    },
+    {
+      title: "А.Мөнхбаяр",
+      value: "teacher9",
+      children: [
+        {
+          title: "Сүлжээний архитектур",
+          value: "Сүлжээний архитектур",
+        },
+      ],
+    },
+    {
+      title: "Б.Отгонцэцэг",
+      value: "teacher10",
+      children: [
+        {
+          title: "Биеийн тамир",
+          value: "Биеийн тамир",
+        },
+      ],
+    },
   ];
 
   const [value, setValue] = useState(undefined);
@@ -65,6 +131,14 @@ const Home = () => {
   const [schedule, setSchedule] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
+
+  // Load the schedule from localStorage if it exists
+  useEffect(() => {
+    const savedSchedule = localStorage.getItem(`schedule-${user?.id}`);
+    if (savedSchedule) {
+      setSchedule(JSON.parse(savedSchedule));
+    }
+  }, [user?.id]);
 
   const toggleSchedule = () => {
     setIsEditable(!isEditable);
@@ -91,16 +165,20 @@ const Home = () => {
       )?.title;
 
       if (teacher && subject) {
-        setSchedule((prevSchedule) => {
-          const updatedSchedule = { ...prevSchedule };
-          updatedSchedule[
-            `${selectedCell.timeIndex}-${selectedCell.dayIndex}`
-          ] = {
+        const updatedSchedule = {
+          ...schedule,
+          [`${selectedCell.timeIndex}-${selectedCell.dayIndex}`]: {
             teacher,
             subject,
-          };
-          return updatedSchedule;
-        });
+          },
+        };
+
+        // Save the updated schedule to LocalStorage
+        setSchedule(updatedSchedule);
+        localStorage.setItem(
+          `schedule-${user?.id}`,
+          JSON.stringify(updatedSchedule)
+        );
       }
 
       closeModal();
