@@ -73,7 +73,7 @@ const Messenger = () => {
     ],
     2: [
       { id: 1, text: "Hello!", sender: "other", timestamp: "9:45 AM" },
-      { id: 2, text: "Hi! What's up?", sender: "me", timestamp: "9:46 AM" },
+      { id: 2, text: "Hi! What's up?", sender: "mejk", timestamp: "9:46 AM" },
     ],
     3: [
       {
