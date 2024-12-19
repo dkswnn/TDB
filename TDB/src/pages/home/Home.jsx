@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from "react";
+import { useUser } from "@clerk/clerk-react";
+import { Button, Modal, TreeSelect, Input } from "antd";
+import React, { useEffect, useState } from "react";
 import PageLayout from "../../layouts/PageLayout";
-import { Modal, Button } from "antd";
-import { TreeSelect } from "antd";
-import { useUser } from "@clerk/clerk-react"; // Clerk hook for user info
 
 const Home = () => {
-  const { user } = useUser(); // Get current user from Clerk
+  const { user } = useUser();
   const days = ["Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан"];
   const times = [
     "8:00-9:30",
@@ -131,8 +130,10 @@ const Home = () => {
   const [schedule, setSchedule] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditable, setIsEditable] = useState(false);
+  const [isHomeWorkModalOpen, setIsHomeWorkModalOpen] = useState(false);
+  const [homeworkData, setHomeworkData] = useState(null);
+  const [todo, setTodo] = useState([]);
 
-  // Load the schedule from localStorage if it exists
   useEffect(() => {
     const savedSchedule = localStorage.getItem(`schedule-${user?.id}`);
     if (savedSchedule) {
@@ -144,8 +145,9 @@ const Home = () => {
     setIsEditable(!isEditable);
   };
 
-  const openModal = (timeIndex, dayIndex) => {
+  const openModal = (timeIndex, dayIndex, existingValue) => {
     setSelectedCell({ timeIndex, dayIndex });
+    setValue(existingValue || undefined);
     setIsModalOpen(true);
   };
 
@@ -155,6 +157,23 @@ const Home = () => {
 
   const onChange = (newValue) => {
     setValue(newValue);
+  };
+
+  const openHomeWorkModal = (timeIndex, dayIndex) => {
+    const cellKey = `${timeIndex}-${dayIndex}`;
+    const existingSchedule = schedule[cellKey];
+    if (existingSchedule) {
+      setHomeworkData(existingSchedule);
+    } else {
+      setHomeworkData(null);
+    }
+    setSelectedCell({ timeIndex, dayIndex });
+    setIsHomeWorkModalOpen(true);
+  };
+
+  const closeHomeWorkModal = () => {
+    setIsHomeWorkModalOpen(false);
+    setHomeworkData(null);
   };
 
   const handleSubmit = () => {
@@ -172,15 +191,12 @@ const Home = () => {
             subject,
           },
         };
-
-        // Save the updated schedule to LocalStorage
         setSchedule(updatedSchedule);
         localStorage.setItem(
           `schedule-${user?.id}`,
           JSON.stringify(updatedSchedule)
         );
       }
-
       closeModal();
     }
   };
@@ -189,9 +205,9 @@ const Home = () => {
     <PageLayout>
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center gap-4 mb-4">
-          <div className="text-2xl font-bold text-center flex-grow">
+          <h1 className="text-2xl font-bold text-center flex-grow">
             Хичээлийн хуваарь
-          </div>
+          </h1>
           <button
             className="ml-auto border-[3px] border-green-300 rounded-full p-1 bg-green-300 hover:bg-slate-300 hover:border-slate-300"
             onClick={toggleSchedule}
@@ -212,12 +228,13 @@ const Home = () => {
               <div className="font-bold text-center border p-8">{time}</div>
               {days.map((_, dayIndex) => {
                 const cellKey = `${timeIndex}-${dayIndex}`;
+                const existingSchedule = schedule[cellKey];
                 return (
                   <div
                     key={cellKey}
                     className="border p-8 text-center bg-gray-100 relative"
                   >
-                    {isEditable && !schedule[cellKey] && (
+                    {isEditable && !existingSchedule && (
                       <button
                         className="absolute inset-0 flex items-center justify-center text-xl"
                         onClick={() => openModal(timeIndex, dayIndex)}
@@ -225,10 +242,29 @@ const Home = () => {
                         +
                       </button>
                     )}
-                    {schedule[cellKey] && (
-                      <div className="text-center">
-                        <div>{schedule[cellKey].subject}</div>
-                        <div>{schedule[cellKey].teacher}</div>
+                    {existingSchedule && (
+                      <div>
+                        <div
+                          onClick={() => openHomeWorkModal(timeIndex, dayIndex)}
+                          className="cursor-pointer"
+                        >
+                          <div>{existingSchedule.subject}</div>
+                          <div>{existingSchedule.teacher}</div>
+                        </div>
+                        {isEditable && (
+                          <button
+                            className="absolute top-0 right-0 mt-2 mr-2 text-blue-500"
+                            onClick={() =>
+                              openModal(
+                                timeIndex,
+                                dayIndex,
+                                `${existingSchedule.teacher}:${existingSchedule.subject}`
+                              )
+                            }
+                          >
+                            Өөрчлөх
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -244,31 +280,46 @@ const Home = () => {
           onCancel={closeModal}
           footer={null}
         >
-          <div>
-            <div style={{ width: 300 }}>
-              <h2>Choose Teacher and Subject</h2>
-              <TreeSelect
-                value={value}
-                onChange={onChange}
-                treeData={treeData.map((teacher) => ({
-                  ...teacher,
-                  children: teacher.children.map((subject) => ({
-                    ...subject,
-                    value: `${teacher.value}:${subject.value}`,
-                  })),
-                }))}
-                placeholder="Select a teacher and a subject"
-                style={{ width: "100%" }}
-                treeDefaultExpandAll
-                treeCheckable={false}
-                showCheckedStrategy={TreeSelect.SHOW_CHILD}
-                allowClear={true}
-              />
-              <Button onClick={handleSubmit} type="primary" className="mt-4">
-                Submit
-              </Button>
+          <TreeSelect
+            value={value}
+            onChange={onChange}
+            treeData={treeData.map((teacher) => ({
+              ...teacher,
+              children: teacher.children.map((subject) => ({
+                ...subject,
+                value: `${teacher.value}:${subject.value}`,
+              })),
+            }))}
+            placeholder="Хичээлээ сонгоно уу"
+            style={{ width: "100%" }}
+            treeDefaultExpandAll
+            allowClear={true}
+          />
+          <Button onClick={handleSubmit} type="primary" className="mt-4">
+            Submit
+          </Button>
+        </Modal>
+
+        <Modal
+          title="Гэрийн даалгавар"
+          open={isHomeWorkModalOpen}
+          onCancel={closeHomeWorkModal}
+          footer={null}
+        >
+          {homeworkData ? (
+            <div>
+              <div className="flex gap-5">
+                <h3>Хичээл: {homeworkData.subject}</h3>
+                <p>Багш: {homeworkData.teacher}</p>
+              </div>
+              <div>
+                <Input />
+                <Button></Button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <p>Мэдээлэл олдсонгүй</p>
+          )}
         </Modal>
       </div>
     </PageLayout>
