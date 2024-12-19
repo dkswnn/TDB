@@ -32,7 +32,7 @@ const Assignment = () => {
 
   const handleAddTask = useCallback(() => {
     if (newTask.name && newTask.priority && newTask.partners && newTask.date) {
-      const updatedTasks = [...task, newTask];
+      const updatedTasks = [...tasks, newTask];
       setTasks(updatedTasks);
       setNewTask({
         name: "",
