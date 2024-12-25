@@ -141,25 +141,32 @@ const Home = () => {
   });
 
   useEffect(() => {
-    const savedSchedule = localStorage.getItem(`schedule-${user?.id}`);
-    if (savedSchedule) {
-      setSchedule(JSON.parse(savedSchedule));
-    }
-
-    const savedHomeworkList = localStorage.getItem(`homeworkList-${user?.id}`);
-    if (savedHomeworkList) {
-      setHomework(JSON.parse(savedHomeworkList));
+    const userId = user?.id;
+    if (userId) {
+      const savedSchedule = localStorage.getItem(`schedule-${userId}`);
+      const savedHomework = localStorage.getItem(`homework-${userId}`);
+      if (savedSchedule) {
+        setSchedule(JSON.parse(savedSchedule));
+      }
+      if (savedHomework) {
+        setHomework(JSON.parse(savedHomework));
+      }
     }
   }, [user?.id]);
+
   useEffect(() => {
-    if (user?.id) {
-      localStorage.setItem(`schedule-${user.id}`, JSON.stringify(schedule));
-      localStorage.setItem(
-        `homeworkList-${user.id}`,
-        JSON.stringify(homeworkList)
-      );
+    const userId = user?.id;
+    if (userId && Object.keys(schedule).length > 0) {
+      localStorage.setItem(`schedule-${userId}`, JSON.stringify(schedule));
     }
-  }, [schedule, homeworkList, user?.id]);
+  }, [schedule, user?.id]);
+
+  useEffect(() => {
+    const userId = user?.id;
+    if (userId && homeworkList.tasks.length > 0) {
+      localStorage.setItem(`homework-${userId}`, JSON.stringify(homeworkList));
+    }
+  }, [homeworkList, user?.id]);
 
   const toggleSchedule = () => {
     setIsEditable(!isEditable);
@@ -257,19 +264,13 @@ const Home = () => {
         lesson: existingSchedule.subject,
         teacher: existingSchedule.teacher,
       };
-      setHomework((prevHomework) => {
-        const updatedHomework = {
-          ...prevHomework,
-          tasks: [...prevHomework.tasks, newTask],
-        };
-        localStorage.setItem(
-          `homeworkList-${user?.id}`,
-          JSON.stringify(updatedHomework)
-        );
-        return updatedHomework;
-      });
 
-      console.log("Task Added:", newTask);
+      const updatedHomeworkList = {
+        ...homeworkList,
+        tasks: [...homeworkList.tasks, newTask],
+      };
+
+      setHomework(updatedHomeworkList);
     } else {
       console.warn("No existing schedule found for the selected cell.");
     }
