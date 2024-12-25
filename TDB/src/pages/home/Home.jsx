@@ -1,7 +1,8 @@
 import { useUser } from "@clerk/clerk-react";
-import { Button, Modal, TreeSelect, Input } from "antd";
+import { Button, DatePicker, Input, Modal, TreeSelect, Drawer } from "antd";
 import React, { useEffect, useState } from "react";
 import PageLayout from "../../layouts/PageLayout";
+import dayjs from "dayjs";
 
 const Home = () => {
   const { user } = useUser();
@@ -132,14 +133,33 @@ const Home = () => {
   const [isEditable, setIsEditable] = useState(false);
   const [isHomeWorkModalOpen, setIsHomeWorkModalOpen] = useState(false);
   const [homeworkData, setHomeworkData] = useState(null);
-  const [todo, setTodo] = useState([]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [currentDescription, setCurrentDescription] = useState("");
+  const [currentDeadline, setCurrentDeadline] = useState(null);
+  const [homeworkList, setHomework] = useState({
+    tasks: [],
+  });
 
   useEffect(() => {
     const savedSchedule = localStorage.getItem(`schedule-${user?.id}`);
     if (savedSchedule) {
       setSchedule(JSON.parse(savedSchedule));
     }
+
+    const savedHomeworkList = localStorage.getItem(`homeworkList-${user?.id}`);
+    if (savedHomeworkList) {
+      setHomework(JSON.parse(savedHomeworkList));
+    }
   }, [user?.id]);
+  useEffect(() => {
+    if (user?.id) {
+      localStorage.setItem(`schedule-${user.id}`, JSON.stringify(schedule));
+      localStorage.setItem(
+        `homeworkList-${user.id}`,
+        JSON.stringify(homeworkList)
+      );
+    }
+  }, [schedule, homeworkList, user?.id]);
 
   const toggleSchedule = () => {
     setIsEditable(!isEditable);
@@ -159,6 +179,14 @@ const Home = () => {
     setValue(newValue);
   };
 
+  const openDrawer = () => {
+    setIsDrawerOpen(true);
+  };
+
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+  };
+
   const openHomeWorkModal = (timeIndex, dayIndex) => {
     const cellKey = `${timeIndex}-${dayIndex}`;
     const existingSchedule = schedule[cellKey];
@@ -174,6 +202,21 @@ const Home = () => {
   const closeHomeWorkModal = () => {
     setIsHomeWorkModalOpen(false);
     setHomeworkData(null);
+  };
+
+  const handleDelete = () => {
+    if (selectedCell) {
+      const updatedSchedule = { ...schedule };
+      delete updatedSchedule[
+        `${selectedCell.timeIndex}-${selectedCell.dayIndex}`
+      ];
+      setSchedule(updatedSchedule);
+      localStorage.setItem(
+        `schedule-${user?.id}`,
+        JSON.stringify(updatedSchedule)
+      );
+      closeModal();
+    }
   };
 
   const handleSubmit = () => {
@@ -201,6 +244,54 @@ const Home = () => {
     }
   };
 
+  const handleAddHomeWork = () => {
+    if (!selectedCell) return;
+
+    const cellKey = `${selectedCell.timeIndex}-${selectedCell.dayIndex}`;
+    const existingSchedule = schedule[cellKey];
+
+    if (existingSchedule) {
+      const newTask = {
+        description: currentDescription,
+        deadline: currentDeadline,
+        lesson: existingSchedule.subject,
+        teacher: existingSchedule.teacher,
+      };
+      setHomework((prevHomework) => {
+        const updatedHomework = {
+          ...prevHomework,
+          tasks: [...prevHomework.tasks, newTask],
+        };
+        localStorage.setItem(
+          `homeworkList-${user?.id}`,
+          JSON.stringify(updatedHomework)
+        );
+        return updatedHomework;
+      });
+
+      console.log("Task Added:", newTask);
+    } else {
+      console.warn("No existing schedule found for the selected cell.");
+    }
+
+    setCurrentDescription("");
+    setCurrentDeadline(null);
+  };
+
+  useEffect(() => {
+    console.log("Updated Homework Tasks:", homeworkList.tasks);
+  }, [homeworkList.tasks]);
+
+  const deleteHomework = (index) => {
+    const updatedTasks = [...homeworkList.tasks];
+    updatedTasks.splice(index, 1);
+    setHomework({ ...homeworkList, tasks: updatedTasks });
+    localStorage.setItem(
+      `homeworkList-${user?.id}`,
+      JSON.stringify({ ...homeworkList, tasks: updatedTasks })
+    );
+  };
+
   return (
     <PageLayout>
       <div className="container mx-auto p-4">
@@ -215,7 +306,20 @@ const Home = () => {
             Хуваарь өөрчлөх
           </button>
         </div>
-
+        <Button
+          type="primary"
+          onClick={openDrawer}
+          style={{
+            position: "fixed",
+            top: "80%",
+            right: "0px",
+            transform: "translateY(-50%)",
+            zIndex: 1000,
+            borderRadius: 0,
+          }}
+        >
+          Гэрийн даалгавар
+        </Button>
         <div className="grid grid-cols-6">
           <div className="font-bold text-center border p-8">Цаг\Өдөр</div>
           {days.map((day, index) => (
@@ -278,7 +382,17 @@ const Home = () => {
           title="Хичээл нэмэх"
           open={isModalOpen}
           onCancel={closeModal}
-          footer={null}
+          footer={[
+            <Button key="delete" danger onClick={handleDelete}>
+              Устгах
+            </Button>,
+            <Button key="cancel" onClick={closeModal}>
+              Болих
+            </Button>,
+            <Button key="submit" type="primary" onClick={handleSubmit}>
+              Хадгалах
+            </Button>,
+          ]}
         >
           <TreeSelect
             value={value}
@@ -295,9 +409,6 @@ const Home = () => {
             treeDefaultExpandAll
             allowClear={true}
           />
-          <Button onClick={handleSubmit} type="primary" className="mt-4">
-            Submit
-          </Button>
         </Modal>
 
         <Modal
@@ -313,14 +424,64 @@ const Home = () => {
                 <p>Багш: {homeworkData.teacher}</p>
               </div>
               <div>
-                <Input />
-                <Button></Button>
+                <p>Гэрийн даалгавар</p>
+                <Input
+                  value={currentDescription}
+                  onChange={(event) =>
+                    setCurrentDescription(event.target.value)
+                  }
+                />
+                <p>Эцсийн хугацаа</p>
+                <DatePicker
+                  value={currentDeadline ? dayjs(currentDeadline) : null} // Ensure correct date handling
+                  onChange={(date, dateString) => {
+                    setCurrentDeadline(dateString);
+                  }}
+                />
+
+                <Button key="submit" type="primary" onClick={handleAddHomeWork}>
+                  Хадгалах
+                </Button>
               </div>
             </div>
           ) : (
             <p>Мэдээлэл олдсонгүй</p>
           )}
         </Modal>
+
+        <Drawer
+          title="Гэрийн даалгавар"
+          onClose={closeDrawer}
+          open={isDrawerOpen}
+          size={"large"}
+        >
+          <div className="container">
+            <div className="flex flex-wrap gap-4">
+              {homeworkList.tasks && homeworkList.tasks.length > 0 ? (
+                homeworkList.tasks.map((homework, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col border p-4 rounded-md bg-gray-100 relative"
+                  >
+                    <button
+                      onClick={() => deleteHomework(index)}
+                      className="absolute top-0 right-1  text-red-500 hover:text-slate-700 duration-300 border"
+                    >
+                      X
+                    </button>
+                    <div className="font-bold">
+                      Хичээл: {homework.lesson} [{homework.teacher}]
+                    </div>
+                    <div>Гэрийн даалгавар: {homework.description}</div>
+                    <div>Эцсийн хугацаа: {homework.deadline}</div>
+                  </div>
+                ))
+              ) : (
+                <p>Гэрийн даалгавар байхгүй байна.</p>
+              )}
+            </div>
+          </div>
+        </Drawer>
       </div>
     </PageLayout>
   );
