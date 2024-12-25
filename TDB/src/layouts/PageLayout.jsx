@@ -68,7 +68,6 @@ const PageLayout = ({ children }) => {
         />
       </Sider>
       <Layout>
-        <Header className="bg-gray-100 p-0 h-16 flex items-center" />
         <Content className="m-4">{children}</Content>
         <Footer className="text-center bg-gray-50 py-4">
           Ant Design ©{new Date().getFullYear()} Created by Ant UED
