@@ -143,13 +143,13 @@ const Home = () => {
   useEffect(() => {
     const userId = user?.id;
     if (userId) {
-      const savedSchedule = localStorage.getItem(`schedule-${userId}`);
-      const savedHomework = localStorage.getItem(`homework-${userId}`);
+      const savedSchedule = user.unsafeMetadata[`schedule-${userId}`];
+      const savedHomework = user.unsafeMetadata[`homework-${userId}`];
       if (savedSchedule) {
-        setSchedule(JSON.parse(savedSchedule));
+        setSchedule(savedSchedule);
       }
       if (savedHomework) {
-        setHomework(JSON.parse(savedHomework));
+        setHomework(savedHomework);
       }
     }
   }, [user?.id]);
@@ -157,14 +157,24 @@ const Home = () => {
   useEffect(() => {
     const userId = user?.id;
     if (userId && Object.keys(schedule).length > 0) {
-      localStorage.setItem(`schedule-${userId}`, JSON.stringify(schedule));
+      user.update({
+        unsafeMetadata: {
+          ...user.unsafeMetadata,
+          [`schedule-${userId}`]: schedule,
+        },
+      });
     }
   }, [schedule, user?.id]);
 
   useEffect(() => {
     const userId = user?.id;
     if (userId && homeworkList.tasks.length > 0) {
-      localStorage.setItem(`homework-${userId}`, JSON.stringify(homeworkList));
+      user.update({
+        unsafeMetadata: {
+          ...user.unsafeMetadata,
+          [`homework-${userId}`]: homeworkList,
+        },
+      });
     }
   }, [homeworkList, user?.id]);
 
@@ -218,10 +228,12 @@ const Home = () => {
         `${selectedCell.timeIndex}-${selectedCell.dayIndex}`
       ];
       setSchedule(updatedSchedule);
-      localStorage.setItem(
-        `schedule-${user?.id}`,
-        JSON.stringify(updatedSchedule)
-      );
+      user.update({
+        unsafeMetadata: {
+          ...user.unsafeMetadata,
+          [`schedule-${user?.id}`]: updatedSchedule,
+        },
+      });
       closeModal();
     }
   };
@@ -242,10 +254,12 @@ const Home = () => {
           },
         };
         setSchedule(updatedSchedule);
-        localStorage.setItem(
-          `schedule-${user?.id}`,
-          JSON.stringify(updatedSchedule)
-        );
+        user.update({
+          unsafeMetadata: {
+            ...user.unsafeMetadata,
+            [`schedule-${user?.id}`]: updatedSchedule,
+          },
+        });
       }
       closeModal();
     }
@@ -271,6 +285,12 @@ const Home = () => {
       };
 
       setHomework(updatedHomeworkList);
+      user.update({
+        unsafeMetadata: {
+          ...user.unsafeMetadata,
+          [`homework-${user?.id}`]: updatedHomeworkList,
+        },
+      });
     } else {
       console.warn("No existing schedule found for the selected cell.");
     }
@@ -287,10 +307,12 @@ const Home = () => {
     const updatedTasks = [...homeworkList.tasks];
     updatedTasks.splice(index, 1);
     setHomework({ ...homeworkList, tasks: updatedTasks });
-    localStorage.setItem(
-      `homeworkList-${user?.id}`,
-      JSON.stringify({ ...homeworkList, tasks: updatedTasks })
-    );
+    user.update({
+      unsafeMetadata: {
+        ...user.unsafeMetadata,
+        [`homework-${user?.id}`]: { tasks: updatedTasks },
+      },
+    });
   };
 
   return (

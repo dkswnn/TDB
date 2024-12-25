@@ -1,17 +1,21 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import PageLayout from "../../layouts/PageLayout";
 import { Button, message } from "antd";
 import { SignInButton, useUser } from "@clerk/clerk-react";
 import TaskCard from "./TaskCard";
 import AddTaskModal from "./AddTaskModal";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
+import {
+  FileDoneOutlined,
+  ProfileOutlined,
+  ProjectOutlined,
+  QuestionCircleOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
 
 const Assignment = () => {
   const [showAddTask, setShowAddTask] = useState(false);
-  const [loading, setLoading] = useState(false);
-
   const [tasks, setTasks] = useState([]);
-
   const [newTask, setNewTask] = useState({
     name: "",
     priority: "",
@@ -20,12 +24,10 @@ const Assignment = () => {
     status: "todo",
   });
 
-  const { user, signInAttempt } = useUser();
+  const { user } = useUser();
 
   useEffect(() => {
-    if (!user) {
-      console.log("Please sign in to access this page.");
-    } else {
+    if (user) {
       setTasks(user.unsafeMetadata.todos || []);
     }
   }, [user]);
@@ -68,7 +70,7 @@ const Assignment = () => {
 
   const removeTask = useCallback(
     (taskIndex) => {
-      const updatedTasks = tasks.filter((task, index) => index !== taskIndex);
+      const updatedTasks = tasks.filter((_, index) => index !== taskIndex);
       setTasks(updatedTasks);
       user.update({
         unsafeMetadata: { ...user.unsafeMetadata, todos: updatedTasks },
@@ -78,13 +80,13 @@ const Assignment = () => {
   );
 
   const onDragEnd = (result) => {
-    if (!result.destination) return; // If dropped outside a droppable area
+    if (!result.destination) return;
     const { source, destination } = result;
     const updatedTasks = Array.from(tasks);
-    const [movedTask] = updatedTasks.splice(source.index, 1); // Remove the task from the source index
-    movedTask.status = destination.droppableId; // Update the status based on the droppableId
-    updatedTasks.splice(destination.index, 0, movedTask); // Insert the task at the destination index
-    setTasks(updatedTasks); // Update the tasks state
+    const [movedTask] = updatedTasks.splice(source.index, 1);
+    movedTask.status = destination.droppableId;
+    updatedTasks.splice(destination.index, 0, movedTask);
+    setTasks(updatedTasks);
     user.update({
       unsafeMetadata: { ...user.unsafeMetadata, todos: updatedTasks },
     });
@@ -94,10 +96,8 @@ const Assignment = () => {
     <DragDropContext onDragEnd={onDragEnd}>
       {user ? (
         <PageLayout>
-          <div className="text-3xl font-medium mb-4">Project Name</div>
-          {/* <ListTasks tasks={tasks} setTasks={setTasks} /> */}
+          <div className="text-3xl font-medium mb-5">Ажиллах Төсөл</div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card 3 */}
             <div className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm">
               <div className="flex justify-between items-center mb-2">
                 <p className="font-semibold">Бүх ажил:</p>
@@ -114,9 +114,7 @@ const Assignment = () => {
             </div>
           </div>
 
-          {/* Task sections */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-5">
-            {/* To Do section */}
             <Droppable droppableId="todo">
               {(provided) => (
                 <div
@@ -124,18 +122,21 @@ const Assignment = () => {
                   {...provided.droppableProps}
                   className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm"
                 >
-                  <div className="flex justify-between items-center">
-                    <p className="font-semibold text-xl">Ажлын жагсаалт</p>
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center gap-2">
+                      <ProfileOutlined
+                        style={{ fontSize: "24px", color: "#1890ff" }}
+                      />
+                      <p className="font-semibold text-xl">Ажлын жагсаалт</p>
+                    </div>
                     <Button
                       type="primary"
+                      icon={<PlusOutlined />}
                       shape="circle"
-                      className="bg-green-500 text-white"
                       onClick={() => setShowAddTask(true)}
-                    >
-                      +
-                    </Button>
+                    />
                   </div>
-                  <div className="grid grid-cols-1 gap-4 mt-5">
+                  <div className="grid grid-cols-1 gap-4">
                     {tasks
                       .filter((task) => task.status === "todo")
                       .map((task, index) => (
@@ -143,10 +144,9 @@ const Assignment = () => {
                           key={task.id}
                           task={task}
                           index={index}
-                          draggableId={task.id} // Pass unique id
+                          draggableId={task.id}
                           removeTask={removeTask}
                           moveTaskToSection={moveTaskToSection}
-                          loading={loading}
                         />
                       ))}
                   </div>
@@ -155,7 +155,6 @@ const Assignment = () => {
               )}
             </Droppable>
 
-            {/* In Progress section */}
             <Droppable droppableId="in-progress">
               {(provided) => (
                 <div
@@ -163,10 +162,13 @@ const Assignment = () => {
                   {...provided.droppableProps}
                   className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm"
                 >
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2 mb-4">
+                    <ProjectOutlined
+                      style={{ fontSize: "24px", color: "#faad14" }}
+                    />
                     <p className="font-semibold text-xl">Ажиллаж байгаа</p>
                   </div>
-                  <div className="grid grid-cols-1 gap-4 mt-5">
+                  <div className="grid grid-cols-1 gap-4">
                     {tasks
                       .filter((task) => task.status === "in-progress")
                       .map((task, index) => (
@@ -174,10 +176,9 @@ const Assignment = () => {
                           key={task.id}
                           task={task}
                           index={index}
-                          draggableId={task.id} // Pass unique id
+                          draggableId={task.id}
                           removeTask={removeTask}
                           moveTaskToSection={moveTaskToSection}
-                          loading={loading}
                         />
                       ))}
                   </div>
@@ -186,7 +187,6 @@ const Assignment = () => {
               )}
             </Droppable>
 
-            {/* Closed section */}
             <Droppable droppableId="closed">
               {(provided) => (
                 <div
@@ -194,10 +194,13 @@ const Assignment = () => {
                   {...provided.droppableProps}
                   className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm"
                 >
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileDoneOutlined
+                      style={{ fontSize: "24px", color: "#52c41a" }}
+                    />
                     <p className="font-semibold text-xl">Дууссан</p>
                   </div>
-                  <div className="grid grid-cols-1 gap-4 mt-5">
+                  <div className="grid grid-cols-1 gap-4">
                     {tasks
                       .filter((task) => task.status === "closed")
                       .map((task, index) => (
@@ -205,10 +208,9 @@ const Assignment = () => {
                           key={task.id}
                           task={task}
                           index={index}
-                          draggableId={task.id} // Pass unique id
+                          draggableId={task.id}
                           removeTask={removeTask}
                           moveTaskToSection={moveTaskToSection}
-                          loading={loading}
                         />
                       ))}
                   </div>
@@ -217,7 +219,6 @@ const Assignment = () => {
               )}
             </Droppable>
 
-            {/* Frozen section */}
             <Droppable droppableId="frozen">
               {(provided) => (
                 <div
@@ -225,10 +226,13 @@ const Assignment = () => {
                   {...provided.droppableProps}
                   className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm"
                 >
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2 mb-4">
+                    <QuestionCircleOutlined
+                      style={{ fontSize: "24px", color: "#f5222d" }}
+                    />
                     <p className="font-semibold text-xl">Түр зогссон</p>
                   </div>
-                  <div className="grid grid-cols-1 gap-4 mt-5">
+                  <div className="grid grid-cols-1 gap-4">
                     {tasks
                       .filter((task) => task.status === "frozen")
                       .map((task, index) => (
@@ -236,10 +240,9 @@ const Assignment = () => {
                           key={task.id}
                           task={task}
                           index={index}
-                          draggableId={task.id} // Pass unique id
+                          draggableId={task.id}
                           removeTask={removeTask}
                           moveTaskToSection={moveTaskToSection}
-                          loading={loading}
                         />
                       ))}
                   </div>
@@ -249,15 +252,12 @@ const Assignment = () => {
             </Droppable>
           </div>
 
-          {/* Add Task Modal */}
           <AddTaskModal
-            key={tasks.id}
             showAddTask={showAddTask}
             setShowAddTask={setShowAddTask}
             handleAddTask={handleAddTask}
             newTask={newTask}
             setNewTask={setNewTask}
-            loading={loading}
           />
         </PageLayout>
       ) : (
@@ -267,7 +267,6 @@ const Assignment = () => {
               Please sign in to access this page.
             </div>
             <Button>
-              {" "}
               <SignInButton />
             </Button>
           </div>
