@@ -10,7 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@clerk/clerk-react": "^5.21.0",
+=======
+    "@ant-design/icons": "^5.5.2",
+    "@clerk/clerk-react": "^5.17.1",
+>>>>>>> acc0acb8948058f69b6a6106d1a4214703bb5d0a
     "@clerk/themes": "^2.1.48",
     "antd": "^5.22.2",
     "react": "^18.3.1",
