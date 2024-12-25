@@ -25,7 +25,7 @@ const AddTaskModal = ({
 
   return (
     <Modal
-      title="Add New Task"
+      title="Шинэ ажил"
       visible={showAddTask}
       onCancel={handleCancel}
       footer={[
@@ -43,7 +43,7 @@ const AddTaskModal = ({
       ]}
     >
       <div className="mb-4">
-        <p className="font-semibold">Task Name:</p>
+        <p className="font-semibold">Ажлын нэр:</p>
         <Input
           type="text"
           value={newTask.name}
@@ -54,9 +54,9 @@ const AddTaskModal = ({
         />
       </div>
       <div className="mb-4">
-        <p className="font-semibold">Type of Project:</p>
+        <p className="font-semibold">Ажлын түвшин:</p>
         <div className="flex gap-4">
-          {["High", "Medium", "Low"].map((level) => (
+          {["Өндөр", "Дунд", "Амархан"].map((level) => (
             <Checkbox
               key={level}
               checked={newTask.priority === level}
@@ -68,7 +68,7 @@ const AddTaskModal = ({
         </div>
       </div>
       <div className="mb-4">
-        <p className="font-semibold">Partners:</p>
+        <p className="font-semibold">Хамтаргчид:</p>
         <Input
           type="text"
           value={newTask.partners}
@@ -77,7 +77,7 @@ const AddTaskModal = ({
         />
       </div>
       <div className="mb-4">
-        <p className="font-semibold">Dead Line:</p>
+        <p className="font-semibold">Дуусах хугацаа:</p>
         <DatePicker
           onChange={(date, dateString) =>
             setNewTask({ ...newTask, date: dateString })

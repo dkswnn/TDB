@@ -17,11 +17,11 @@ const TaskCard = ({ task, index, removeTask }) => {
             <p className="text-xs">{task.priority}</p>
           </div>
           <div className="flex justify-between items-center mb-2">
-            <p className="font-semibold text-xs">Partners:</p>
+            <p className="font-semibold text-xs">Хамтрагчид:</p>
             <p className="text-xs">{task.partners}</p>
           </div>
           <div className="flex justify-between items-center">
-            <p className="font-semibold text-xs">Date Added:</p>
+            <p className="font-semibold text-xs">Дуусах хугацаа:</p>
             <p className="text-xs">{task.date}</p>
           </div>
           <div className="flex justify-end mt-4">
@@ -31,7 +31,7 @@ const TaskCard = ({ task, index, removeTask }) => {
               onClick={() => removeTask(index)}
               className="text-xs"
             >
-              Remove
+              Устгах
             </Button>
           </div>
         </div>

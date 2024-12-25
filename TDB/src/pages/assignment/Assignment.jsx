@@ -97,47 +97,18 @@ const Assignment = () => {
           <div className="text-3xl font-medium mb-4">Project Name</div>
           {/* <ListTasks tasks={tasks} setTasks={setTasks} /> */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card 1 */}
-            <div className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm">
-              <div className="flex justify-between items-center mb-2">
-                <p className="font-semibold">Date Added:</p>
-                <p></p>
-              </div>
-              <div className="flex justify-between items-center mb-2">
-                <p className="font-semibold">Deadline:</p>
-                <p>2025/01/15</p>
-              </div>
-              <div className="flex justify-between items-center mb-2">
-                <p className="font-semibold">Partners:</p>
-                <p>Duku,Suuri,Tamira</p>
-              </div>
-            </div>
-
-            {/* Card 2 */}
-            <div className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm">
-              <p className="text-lg font-semibold text-[#333333]">Goal:</p>
-              <div className="flex justify-between items-start mb-4">
-                <p className="text-sm text-[#666666] max-w-lg">
-                  Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                  Quidem qui enim eum facere nulla tempore, at natus sequi non,
-                  perspiciatis adipisci obcaecati fugiat quod? Assumenda,
-                  incidunt nobis! Amet, non quo.
-                </p>
-              </div>
-            </div>
-
             {/* Card 3 */}
             <div className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm">
               <div className="flex justify-between items-center mb-2">
-                <p className="font-semibold">All Tasks:</p>
+                <p className="font-semibold">Бүх ажил:</p>
                 <p>{tasks.length}</p>
               </div>
               <div className="flex justify-between items-center mb-2">
-                <p className="font-semibold">Done:</p>
+                <p className="font-semibold">Дууссан:</p>
                 <p>{tasks.filter((task) => task.status === "closed").length}</p>
               </div>
               <div className="flex justify-between items-center mb-2">
-                <p className="font-semibold">Frozen:</p>
+                <p className="font-semibold">Түр зогссон:</p>
                 <p>{tasks.filter((task) => task.status === "frozen").length}</p>
               </div>
             </div>
@@ -154,7 +125,7 @@ const Assignment = () => {
                   className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm"
                 >
                   <div className="flex justify-between items-center">
-                    <p className="font-semibold text-xl">To Do</p>
+                    <p className="font-semibold text-xl">Ажлын жагсаалт</p>
                     <Button
                       type="primary"
                       shape="circle"
@@ -193,7 +164,7 @@ const Assignment = () => {
                   className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm"
                 >
                   <div className="flex justify-between items-center">
-                    <p className="font-semibold text-xl">In Progress </p>
+                    <p className="font-semibold text-xl">Ажиллаж байгаа</p>
                   </div>
                   <div className="grid grid-cols-1 gap-4 mt-5">
                     {tasks
@@ -224,7 +195,7 @@ const Assignment = () => {
                   className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm"
                 >
                   <div className="flex justify-between items-center">
-                    <p className="font-semibold text-xl">Closed </p>
+                    <p className="font-semibold text-xl">Дууссан</p>
                   </div>
                   <div className="grid grid-cols-1 gap-4 mt-5">
                     {tasks
@@ -255,7 +226,7 @@ const Assignment = () => {
                   className="bg-[#F6F6F6] border border-[#E5E5E5] p-4 rounded-md shadow-sm"
                 >
                   <div className="flex justify-between items-center">
-                    <p className="font-semibold text-xl">Frozen</p>
+                    <p className="font-semibold text-xl">Түр зогссон</p>
                   </div>
                   <div className="grid grid-cols-1 gap-4 mt-5">
                     {tasks
